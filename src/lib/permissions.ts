@@ -6,6 +6,9 @@ export interface PermissionCheck {
   canApprove: boolean;
   canDelete: boolean;
   canManageUsers: boolean;
+  canViewUsers: boolean;
+  canEditUsers: boolean;
+  canDeleteUsers: boolean;
   canManageCategories: boolean;
 }
 
@@ -17,6 +20,9 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
       canApprove: false,
       canDelete: false,
       canManageUsers: false,
+      canViewUsers: false,
+      canEditUsers: false,
+      canDeleteUsers: false,
       canManageCategories: false,
     };
   }
@@ -29,6 +35,9 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canApprove: false,
         canDelete: false,
         canManageUsers: false,
+        canViewUsers: false,
+        canEditUsers: false,
+        canDeleteUsers: false,
         canManageCategories: false,
       };
 
@@ -39,6 +48,9 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canApprove: true,
         canDelete: false,
         canManageUsers: false,
+        canViewUsers: true,
+        canEditUsers: false,
+        canDeleteUsers: false,
         canManageCategories: true,
       };
 
@@ -49,6 +61,9 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canApprove: true,
         canDelete: true,
         canManageUsers: true,
+        canViewUsers: true,
+        canEditUsers: true,
+        canDeleteUsers: true,
         canManageCategories: true,
       };
 
@@ -59,6 +74,9 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canApprove: false,
         canDelete: false,
         canManageUsers: false,
+        canViewUsers: false,
+        canEditUsers: false,
+        canDeleteUsers: false,
         canManageCategories: false,
       };
   }
