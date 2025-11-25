@@ -13,6 +13,13 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Admin client for user management operations (requires service role key)
 // Check if service key is available and log for debugging
+console.log('🔍 Debug - Service Key Check:', {
+  exists: !!supabaseServiceKey,
+  length: supabaseServiceKey?.length || 0,
+  firstChars: supabaseServiceKey?.substring(0, 20) || 'não encontrada',
+  allViteVars: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_'))
+});
+
 if (!supabaseServiceKey) {
   console.warn('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY não encontrada. Funcionalidades de administração podem não funcionar.');
   console.warn('Variáveis disponíveis:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
