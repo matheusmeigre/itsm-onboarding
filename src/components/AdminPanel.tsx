@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Users, UserPlus, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getRoleBadgeColor } from '../lib/permissions';
 import type { UserRoleType } from '../lib/database.types';
+import type { User } from '@supabase/supabase-js';
 
 interface UserWithRole {
   id: string;
@@ -35,18 +36,18 @@ export function AdminPanel() {
 
     try {
       // Buscar usuários da tabela auth.users (requer RLS configurado)
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
 
       if (authError) throw authError;
 
       // Buscar roles da tabela user_roles
-      const { data: roles, error: rolesError } = await supabase
+      const { data: roles, error: rolesError } = await supabaseAdmin
         .from('user_roles')
         .select('*') as { data: Array<{ id: string; user_id: string; role: UserRoleType }> | null; error: any };
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles: UserWithRole[] = authUsers.map((user) => {
+      const usersWithRoles: UserWithRole[] = authUsers.map((user: User) => {
         const userRole = roles?.find((r) => r.user_id === user.id);
         return {
           id: user.id,
@@ -76,16 +77,18 @@ export function AdminPanel() {
     setLoading(true);
 
     try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Use admin createUser to avoid auto-login
+      const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: newUserEmail,
         password: newUserPassword,
+        email_confirm: true, // Auto-confirm email
       });
 
-      if (signUpError) throw signUpError;
+      if (createError) throw createError;
 
-      if (signUpData.user) {
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          user_id: signUpData.user.id,
+      if (userData.user) {
+        const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
+          user_id: userData.user.id,
           role: newUserRole,
           assigned_by: profile!.id,
         } as any);
@@ -111,7 +114,7 @@ export function AdminPanel() {
     setError('');
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('user_roles')
         .upsert({
           user_id: userId,
