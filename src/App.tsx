@@ -15,6 +15,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<'documents' | 'admin' | 'dashboard'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [documentsRefreshToken, setDocumentsRefreshToken] = useState(0);
 
   const handleSelectDocument = (doc: Document | null) => {
     setSelectedDocument(doc);
@@ -29,6 +30,7 @@ function AppContent() {
   const handleSaveDocument = () => {
     setShowEditor(false);
     setSelectedDocument(null);
+    setDocumentsRefreshToken((prev) => prev + 1);
   };
 
   if (loading) {
@@ -47,7 +49,7 @@ function AppContent() {
     <Layout currentView={currentView} onNavigate={setCurrentView}>
       {currentView === 'dashboard' && <Dashboard />}
       {currentView === 'documents' && (
-        <DocumentList onSelectDocument={handleSelectDocument} />
+        <DocumentList onSelectDocument={handleSelectDocument} refreshToken={documentsRefreshToken} />
       )}
       {currentView === 'admin' && <AdminPanel />}
 

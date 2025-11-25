@@ -1,23 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Users, UserPlus, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getRoleBadgeColor } from '../lib/permissions';
-import type { Database, UserRoleType } from '../lib/database.types';
-
-type UserRole = Database['public']['Tables']['user_roles']['Row'];
-
-interface UserWithRole {
-  id: string;
-  email: string;
-  role: UserRoleType | null;
-  role_id: string | null;
-  created_at: string;
-}
+import type { UserRoleType } from '../lib/database.types';
+import {
+  createAdminUser,
+  listAdminUsers,
+  updateAdminUserRole,
+  type AdminUser,
+} from '../services/adminService';
 
 export function AdminPanel() {
-  const { profile } = useAuth();
-  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const { profile, session } = useAuth();
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -26,43 +21,34 @@ export function AdminPanel() {
   const [error, setError] = useState('');
   const permissions = getUserPermissions(profile?.role || null);
 
+  const token = session?.access_token || '';
+
+  const loadUsers = useCallback(async () => {
+    if (!token) {
+      setError('Sessão expirada. Faça login novamente.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { users } = await listAdminUsers(token);
+      setUsers(users);
+    } catch (err) {
+      console.error('Error loading users:', err);
+      setError((err as Error).message || 'Erro ao carregar usuários');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (permissions.canManageUsers) {
       loadUsers();
     }
-  }, [permissions]);
-
-  const loadUsers = async () => {
-    try {
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-
-      if (authError) throw authError;
-
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-
-      if (rolesError) throw rolesError;
-
-      const usersWithRoles: UserWithRole[] = authUsers.users.map(user => {
-        const userRole = roles?.find(r => r.user_id === user.id);
-        return {
-          id: user.id,
-          email: user.email || '',
-          role: userRole?.role || null,
-          role_id: userRole?.id || null,
-          created_at: user.created_at,
-        };
-      });
-
-      setUsers(usersWithRoles);
-    } catch (error) {
-      console.error('Error loading users:', error);
-      setError('Erro ao carregar usuários');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [permissions, loadUsers]);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,31 +56,24 @@ export function AdminPanel() {
     setLoading(true);
 
     try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      if (!token) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+
+      await createAdminUser(token, {
         email: newUserEmail,
         password: newUserPassword,
+        role: newUserRole,
       });
-
-      if (signUpError) throw signUpError;
-
-      if (signUpData.user) {
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          user_id: signUpData.user.id,
-          role: newUserRole,
-          assigned_by: profile!.id,
-        });
-
-        if (roleError) throw roleError;
-      }
 
       setNewUserEmail('');
       setNewUserPassword('');
       setNewUserRole('Analista');
       setShowAddUser(false);
       await loadUsers();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding user:', error);
-      setError(error.message || 'Erro ao adicionar usuário');
+      setError((error as Error).message || 'Erro ao adicionar usuário');
     } finally {
       setLoading(false);
     }
@@ -105,20 +84,16 @@ export function AdminPanel() {
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
-          role: newRole,
-          assigned_by: profile!.id,
-        });
+      if (!token) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
 
-      if (error) throw error;
+      await updateAdminUserRole(token, userId, newRole);
 
       await loadUsers();
     } catch (error) {
       console.error('Error updating role:', error);
-      setError('Erro ao atualizar função');
+      setError((error as Error).message || 'Erro ao atualizar função');
     } finally {
       setLoading(false);
     }

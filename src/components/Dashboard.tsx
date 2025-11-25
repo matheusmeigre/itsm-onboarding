@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FileText, CheckCircle, Clock, Users } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { fetchDashboardStats } from '../services/documentService';
 
 interface Stats {
   totalDocuments: number;
@@ -19,31 +19,36 @@ export function Dashboard() {
     myDrafts: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStats();
-  }, [profile]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
-      const { data: allDocs } = await supabase
-        .from('documents')
-        .select('id, status, author_id');
+      setError(null);
+      const { totalDocuments, approvedDocuments, pendingApprovals, myDrafts, error } = await fetchDashboardStats(
+        profile?.id,
+      );
 
-      if (allDocs) {
-        setStats({
-          totalDocuments: allDocs.length,
-          approvedDocuments: allDocs.filter(d => d.status === 'Aprovado').length,
-          pendingApprovals: allDocs.filter(d => d.status === 'Aguardando Aprovação').length,
-          myDrafts: allDocs.filter(d => d.author_id === profile?.id && d.status === 'Rascunho').length,
-        });
+      if (error) {
+        throw error;
       }
+
+      setStats({
+        totalDocuments,
+        approvedDocuments,
+        pendingApprovals,
+        myDrafts,
+      });
     } catch (error) {
       console.error('Error loading stats:', error);
+      setError('Não foi possível carregar os indicadores');
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.id]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const statCards = [
     {
@@ -76,6 +81,20 @@ export function Dashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <p className="text-red-600 font-medium">{error}</p>
+        <button
+          onClick={loadStats}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }

@@ -4,6 +4,15 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditDocument, canApproveDocument, canDeleteDocument } from '../lib/permissions';
 import type { Database } from '../lib/database.types';
+import { sanitizeRichContent, sanitizeText } from '../lib/sanitize';
+import { validateDocumentPayload } from '../lib/validators';
+import {
+  createDocument,
+  updateDocument as updateDocumentService,
+  submitDocumentForApproval,
+  approveDocument as approveDocumentService,
+  deleteDocument as deleteDocumentService,
+} from '../services/documentService';
 
 type Document = Database['public']['Tables']['documents']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
@@ -55,8 +64,29 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
   };
 
   const handleSave = async () => {
-    if (!title.trim()) {
-      setError('O título é obrigatório');
+    if (!profile?.id) {
+      setError('Perfil do usuário não encontrado');
+      return;
+    }
+
+    const sanitizedTitle = sanitizeText(title);
+    const sanitizedContent = sanitizeRichContent(content);
+    const desiredStatus = isNewDocument
+      ? profile.role === 'Gerente'
+        ? 'Aprovado'
+        : 'Rascunho'
+      : status;
+
+    const validation = validateDocumentPayload({
+      title: sanitizedTitle,
+      content: sanitizedContent,
+      category_id: categoryId ? categoryId : null,
+      status: desiredStatus,
+    });
+
+    if (!validation.success) {
+      const issues = validation.error.issues;
+      setError(issues[0]?.message || 'Dados inválidos');
       return;
     }
 
@@ -65,36 +95,35 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
 
     try {
       if (isNewDocument) {
-        const newStatus = profile?.role === 'Gerente' ? 'Aprovado' : 'Rascunho';
-
-        const { error } = await supabase.from('documents').insert({
-          title,
-          content,
-          category_id: categoryId || null,
-          author_id: profile!.id,
-          status: newStatus,
+        const { error } = await createDocument({
+          title: validation.data.title,
+          content: validation.data.content,
+          category_id: validation.data.category_id ?? null,
+          status: validation.data.status,
+          author_id: profile.id,
         });
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
       } else {
-        const { error } = await supabase
-          .from('documents')
-          .update({
-            title,
-            content,
-            category_id: categoryId || null,
-            status,
-          })
-          .eq('id', document.id);
+        const { error } = await updateDocumentService(document.id, {
+          title: validation.data.title,
+          content: validation.data.content,
+          category_id: validation.data.category_id ?? null,
+          status: validation.data.status,
+        });
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
       }
 
       onSave();
       onClose();
     } catch (error) {
       console.error('Error saving document:', error);
-      setError('Erro ao salvar documento');
+      setError((error as Error).message || 'Erro ao salvar documento');
     } finally {
       setLoading(false);
     }
@@ -105,44 +134,43 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('documents')
-        .update({ status: 'Aguardando Aprovação' })
-        .eq('id', document!.id);
+      const { error } = await submitDocumentForApproval(document!.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       onSave();
       onClose();
     } catch (error) {
       console.error('Error submitting for approval:', error);
-      setError('Erro ao enviar para aprovação');
+      setError((error as Error).message || 'Erro ao enviar para aprovação');
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async () => {
+    if (!profile?.id) {
+      setError('Perfil do usuário não encontrado');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('documents')
-        .update({
-          status: 'Aprovado',
-          approved_by: profile!.id,
-          approved_at: new Date().toISOString(),
-        })
-        .eq('id', document!.id);
+      const { error } = await approveDocumentService(document!.id, profile.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       onSave();
       onClose();
     } catch (error) {
       console.error('Error approving document:', error);
-      setError('Erro ao aprovar documento');
+      setError((error as Error).message || 'Erro ao aprovar documento');
     } finally {
       setLoading(false);
     }
@@ -155,18 +183,17 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
     setError('');
 
     try {
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', document!.id);
+      const { error } = await deleteDocumentService(document!.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       onSave();
       onClose();
     } catch (error) {
       console.error('Error deleting document:', error);
-      setError('Erro ao excluir documento');
+      setError((error as Error).message || 'Erro ao excluir documento');
     } finally {
       setLoading(false);
     }
