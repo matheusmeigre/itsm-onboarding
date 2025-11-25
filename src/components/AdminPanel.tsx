@@ -27,6 +27,7 @@ export function AdminPanel() {
 
   const loadUsers = useCallback(async () => {
     if (!permissions.canManageUsers) {
+      setError('Você não tem permissão para gerenciar usuários');
       setLoading(false);
       return;
     }
@@ -38,7 +39,12 @@ export function AdminPanel() {
       // Buscar usuários da tabela auth.users (requer RLS configurado)
       const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message?.includes('not allowed')) {
+          throw new Error('Configuração necessária: adicione VITE_SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente');
+        }
+        throw authError;
+      }
 
       // Buscar roles da tabela user_roles
       const { data: roles, error: rolesError } = await supabaseAdmin
@@ -84,7 +90,12 @@ export function AdminPanel() {
         email_confirm: true, // Auto-confirm email
       });
 
-      if (createError) throw createError;
+      if (createError) {
+        if (createError.message?.includes('not allowed')) {
+          throw new Error('Configuração necessária: adicione VITE_SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente');
+        }
+        throw createError;
+      }
 
       if (userData.user) {
         const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
