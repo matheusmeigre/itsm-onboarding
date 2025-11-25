@@ -141,14 +141,16 @@ export function AdminPanel() {
         if (emailError) throw emailError;
       }
 
-      // Update role
+      // Update role - use onConflict to handle existing records
       const { error: roleError } = await supabaseAdmin
         .from('user_roles')
         .upsert({
           user_id: editingUser.id,
           role: editRole,
           assigned_by: profile!.id,
-        } as any);
+        } as any, {
+          onConflict: 'user_id'
+        });
 
       if (roleError) throw roleError;
 
@@ -169,14 +171,15 @@ export function AdminPanel() {
     setLoading(true);
 
     try {
-      // Delete user role first
-      if (deletingUser.role_id) {
-        const { error: roleError } = await supabaseAdmin
-          .from('user_roles')
-          .delete()
-          .eq('id', deletingUser.role_id);
-        
-        if (roleError) throw roleError;
+      // Delete user role first (if exists)
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .delete()
+        .eq('user_id', deletingUser.id);
+      
+      if (roleError) {
+        console.error('Error deleting role:', roleError);
+        // Continue anyway - role might not exist
       }
 
       // Delete user from auth
