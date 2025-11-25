@@ -190,16 +190,23 @@ export function AdminPanel() {
       // Step 2: Remove foreign key references that don't have CASCADE
       console.log('🔗 Removendo referências de foreign keys...');
       
-      // Update documents where user is approved_by (no CASCADE)
-      console.log('📄 Limpando approved_by em documents...');
+      // Call RPC to cleanup all references
+      console.log('📄 Executando cleanup_user_references...');
       try {
-        await (supabaseAdmin.rpc as any)('cleanup_user_references', { 
+        const { data, error } = await (supabaseAdmin.rpc as any)('cleanup_user_references', { 
           target_user_id: deletingUser.id 
         });
-        console.log('✅ Referências limpas via RPC');
+        
+        if (error) {
+          console.error('❌ Erro no RPC:', error);
+          throw error;
+        }
+        
+        console.log('✅ Referências limpas via RPC:', data);
       } catch (rpcError) {
-        // Fallback: try direct update with proper casting
-        console.log('⚠️ RPC não disponível, usando update direto...');
+        // Fallback: try direct operations with proper casting
+        console.log('⚠️ RPC não disponível, usando operações diretas...');
+        console.error('Erro RPC:', rpcError);
         
         const docsUpdate = await (supabaseAdmin
           .from('documents') as any)
@@ -208,6 +215,8 @@ export function AdminPanel() {
         
         if (docsUpdate.error) {
           console.warn('⚠️ Erro ao limpar approved_by:', docsUpdate.error);
+        } else {
+          console.log('✅ approved_by limpo');
         }
 
         const rolesUpdate = await (supabaseAdmin
@@ -217,9 +226,23 @@ export function AdminPanel() {
         
         if (rolesUpdate.error) {
           console.warn('⚠️ Erro ao limpar assigned_by:', rolesUpdate.error);
+        } else {
+          console.log('✅ assigned_by limpo');
+        }
+
+        // Delete document_history entries
+        const historyDelete = await (supabaseAdmin
+          .from('document_history') as any)
+          .delete()
+          .eq('changed_by', deletingUser.id);
+        
+        if (historyDelete.error) {
+          console.warn('⚠️ Erro ao deletar document_history:', historyDelete.error);
+        } else {
+          console.log('✅ document_history deletado');
         }
         
-        console.log('✅ Referências limpas com updates diretos');
+        console.log('✅ Referências limpas com operações diretas');
       }
 
       // Note: document_history.changed_by and documents.author_id will cascade delete

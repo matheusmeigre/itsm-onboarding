@@ -1,5 +1,5 @@
--- Function to cleanup user references before deletion
--- This removes foreign key references that don't have ON DELETE CASCADE
+-- Execute este SQL no Supabase SQL Editor para atualizar a função cleanup_user_references
+-- Este comando pode ser executado múltiplas vezes sem problema
 
 CREATE OR REPLACE FUNCTION cleanup_user_references(target_user_id uuid)
 RETURNS void AS $$
@@ -29,9 +29,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION cleanup_user_references(uuid) TO authenticated;
-
--- Add comment for documentation
-COMMENT ON FUNCTION cleanup_user_references(uuid) IS 
-'Removes foreign key references for a user before deletion. 
-Used by admin panel to clean up approved_by and assigned_by references 
-that do not have ON DELETE CASCADE constraint.';
