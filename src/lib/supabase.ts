@@ -12,6 +12,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Admin client for user management operations (requires service role key)
+// Check if service key is available and log for debugging
+if (!supabaseServiceKey) {
+  console.warn('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY não encontrada. Funcionalidades de administração podem não funcionar.');
+  console.warn('Variáveis disponíveis:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+}
+
 export const supabaseAdmin = supabaseServiceKey
   ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -20,3 +26,6 @@ export const supabaseAdmin = supabaseServiceKey
       }
     })
   : supabase; // Fallback to regular client if service key not available
+
+// Flag to check if admin operations are available
+export const isAdminAvailable = !!supabaseServiceKey;

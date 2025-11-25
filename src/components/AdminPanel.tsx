@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Users, UserPlus, Shield, Pencil, Trash2, Eye } from 'lucide-react';
-import { supabaseAdmin } from '../lib/supabase';
+import { Users, UserPlus, Shield, Pencil, Trash2, Eye, AlertCircle } from 'lucide-react';
+import { supabaseAdmin, isAdminAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getRoleBadgeColor } from '../lib/permissions';
 import type { UserRoleType } from '../lib/database.types';
@@ -44,8 +44,8 @@ export function AdminPanel() {
       const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
 
       if (authError) {
-        if (authError.message?.includes('not allowed')) {
-          throw new Error('Configuração necessária: adicione VITE_SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente');
+        if (authError.message?.includes('not allowed') || authError.message?.includes('JWT')) {
+          throw new Error('Service role key não configurada corretamente. Verifique se VITE_SUPABASE_SERVICE_ROLE_KEY está nas variáveis de ambiente do Bolt e faça redeploy.');
         }
         throw authError;
       }
@@ -95,8 +95,8 @@ export function AdminPanel() {
       });
 
       if (createError) {
-        if (createError.message?.includes('not allowed')) {
-          throw new Error('Configuração necessária: adicione VITE_SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente');
+        if (createError.message?.includes('not allowed') || createError.message?.includes('JWT')) {
+          throw new Error('Service role key não configurada corretamente. Verifique se VITE_SUPABASE_SERVICE_ROLE_KEY está nas variáveis de ambiente do Bolt e faça redeploy.');
         }
         throw createError;
       }
@@ -224,13 +224,43 @@ export function AdminPanel() {
         {permissions.canManageUsers && (
           <button
             onClick={() => setShowAddUser(true)}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            disabled={!isAdminAvailable}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!isAdminAvailable ? 'Configuração de admin necessária' : ''}
           >
             <UserPlus className="w-5 h-5" />
             <span>Adicionar Usuário</span>
           </button>
         )}
       </div>
+
+      {!isAdminAvailable && permissions.canManageUsers && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-800 mb-1">
+                Configuração de Administração Necessária
+              </h3>
+              <p className="text-sm text-yellow-700 mb-2">
+                A variável de ambiente <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_SERVICE_ROLE_KEY</code> não foi encontrada.
+              </p>
+              <details className="text-sm text-yellow-700">
+                <summary className="cursor-pointer font-medium hover:text-yellow-800">
+                  Como configurar no Bolt.new
+                </summary>
+                <ol className="list-decimal list-inside mt-2 space-y-1 ml-2">
+                  <li>Clique no ícone de configurações (⚙️) do projeto no Bolt</li>
+                  <li>Vá em "Secrets" ou "Environment Variables"</li>
+                  <li>Adicione: Nome = <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_SERVICE_ROLE_KEY</code></li>
+                  <li>Cole o valor da service_role key do seu projeto Supabase</li>
+                  <li>Salve e faça redeploy do projeto</li>
+                </ol>
+              </details>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
