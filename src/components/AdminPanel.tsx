@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Users, UserPlus, Shield } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getRoleBadgeColor } from '../lib/permissions';
 import type { UserRoleType } from '../lib/database.types';
-import {
-  createAdminUser,
-  listAdminUsers,
-  updateAdminUserRole,
-  type AdminUser,
-} from '../services/adminService';
+
+interface UserWithRole {
+  id: string;
+  email: string;
+  role: UserRoleType | null;
+  role_id: string | null;
+  created_at: string;
+}
 
 export function AdminPanel() {
-  const { profile, session } = useAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const { profile } = useAuth();
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -21,11 +24,8 @@ export function AdminPanel() {
   const [error, setError] = useState('');
   const permissions = getUserPermissions(profile?.role || null);
 
-  const token = session?.access_token || '';
-
   const loadUsers = useCallback(async () => {
-    if (!token) {
-      setError('Sessão expirada. Faça login novamente.');
+    if (!permissions.canManageUsers) {
       setLoading(false);
       return;
     }
@@ -34,21 +34,41 @@ export function AdminPanel() {
     setError('');
 
     try {
-      const { users } = await listAdminUsers(token);
-      setUsers(users);
+      // Buscar usuários da tabela auth.users (requer RLS configurado)
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+
+      if (authError) throw authError;
+
+      // Buscar roles da tabela user_roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*') as { data: Array<{ id: string; user_id: string; role: UserRoleType }> | null; error: any };
+
+      if (rolesError) throw rolesError;
+
+      const usersWithRoles: UserWithRole[] = authUsers.map((user) => {
+        const userRole = roles?.find((r) => r.user_id === user.id);
+        return {
+          id: user.id,
+          email: user.email || '',
+          role: userRole?.role || null,
+          role_id: userRole?.id || null,
+          created_at: user.created_at,
+        };
+      });
+
+      setUsers(usersWithRoles);
     } catch (err) {
       console.error('Error loading users:', err);
       setError((err as Error).message || 'Erro ao carregar usuários');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [permissions.canManageUsers]);
 
   useEffect(() => {
-    if (permissions.canManageUsers) {
-      loadUsers();
-    }
-  }, [permissions, loadUsers]);
+    loadUsers();
+  }, [loadUsers]);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,15 +76,22 @@ export function AdminPanel() {
     setLoading(true);
 
     try {
-      if (!token) {
-        throw new Error('Sessão expirada. Faça login novamente.');
-      }
-
-      await createAdminUser(token, {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newUserEmail,
         password: newUserPassword,
-        role: newUserRole,
       });
+
+      if (signUpError) throw signUpError;
+
+      if (signUpData.user) {
+        const { error: roleError } = await supabase.from('user_roles').insert({
+          user_id: signUpData.user.id,
+          role: newUserRole,
+          assigned_by: profile!.id,
+        } as any);
+
+        if (roleError) throw roleError;
+      }
 
       setNewUserEmail('');
       setNewUserPassword('');
@@ -84,11 +111,15 @@ export function AdminPanel() {
     setError('');
 
     try {
-      if (!token) {
-        throw new Error('Sessão expirada. Faça login novamente.');
-      }
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: newRole,
+          assigned_by: profile!.id,
+        } as any);
 
-      await updateAdminUserRole(token, userId, newRole);
+      if (error) throw error;
 
       await loadUsers();
     } catch (error) {
