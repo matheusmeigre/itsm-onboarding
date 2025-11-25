@@ -171,25 +171,47 @@ export function AdminPanel() {
     setLoading(true);
 
     try {
-      // Delete user role first (if exists)
-      const { error: roleError } = await supabaseAdmin
+      console.log('🗑️ Iniciando deleção do usuário:', deletingUser.id);
+
+      // Step 1: Delete user role first (if exists)
+      console.log('📝 Deletando role do usuário...');
+      const { error: roleError, data: roleData } = await supabaseAdmin
         .from('user_roles')
         .delete()
-        .eq('user_id', deletingUser.id);
+        .eq('user_id', deletingUser.id)
+        .select();
       
       if (roleError) {
-        console.error('Error deleting role:', roleError);
-        // Continue anyway - role might not exist
+        console.error('⚠️ Erro ao deletar role (continuando):', roleError);
+      } else {
+        console.log('✅ Role deletada:', roleData);
       }
 
-      // Delete user from auth
-      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(deletingUser.id);
-      if (deleteError) throw deleteError;
+      // Step 2: Check for foreign key constraints in other tables
+      console.log('📄 Verificando documentos do usuário...');
+      const { data: userDocs } = await supabaseAdmin
+        .from('documents')
+        .select('id')
+        .or(`created_by.eq.${deletingUser.id},approved_by.eq.${deletingUser.id}`);
 
+      if (userDocs && userDocs.length > 0) {
+        console.warn(`⚠️ Usuário tem ${userDocs.length} documentos relacionados. Eles permanecerão com as referências.`);
+      }
+
+      // Step 3: Delete user from auth
+      console.log('👤 Deletando usuário do auth...');
+      const { data: deleteData, error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(deletingUser.id);
+      
+      if (deleteError) {
+        console.error('❌ Erro ao deletar usuário do auth:', deleteError);
+        throw new Error(`Erro ao deletar usuário: ${deleteError.message}`);
+      }
+
+      console.log('✅ Usuário deletado com sucesso:', deleteData);
       setDeletingUser(null);
       await loadUsers();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('❌ Erro geral na deleção:', error);
       setError((error as Error).message || 'Erro ao excluir usuário');
     } finally {
       setLoading(false);
