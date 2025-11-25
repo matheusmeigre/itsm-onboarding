@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { DocumentList } from './components/DocumentList';
 import { DocumentEditor } from './components/DocumentEditor';
 import { AdminPanel } from './components/AdminPanel';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { NotFound } from './components/NotFound';
 import type { Database } from './lib/database.types';
 
 type Document = Database['public']['Tables']['documents']['Row'];
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'documents' | 'admin' | 'dashboard'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [documentsRefreshToken, setDocumentsRefreshToken] = useState(0);
@@ -42,34 +44,64 @@ function AppContent() {
   }
 
   if (!user) {
-    return <LoginForm />;
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView}>
-      {currentView === 'dashboard' && <Dashboard />}
-      {currentView === 'documents' && (
-        <DocumentList onSelectDocument={handleSelectDocument} refreshToken={documentsRefreshToken} />
-      )}
-      {currentView === 'admin' && <AdminPanel />}
+    <Routes>
+      <Route path="/login" element={<Navigate to="/" replace />} />
+      
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
 
-      {showEditor && (
-        <DocumentEditor
-          document={selectedDocument}
-          onClose={handleCloseEditor}
-          onSave={handleSaveDocument}
-        />
-      )}
-    </Layout>
+      <Route
+        path="/documentos"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <DocumentList
+                onSelectDocument={handleSelectDocument}
+                refreshToken={documentsRefreshToken}
+              />
+              {showEditor && (
+                <DocumentEditor
+                  document={selectedDocument}
+                  onClose={handleCloseEditor}
+                  onSave={handleSaveDocument}
+                />
+              )}
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/administracao"
+        element={
+          <ProtectedRoute requiredRole="Gerente">
+            <Layout>
+              <AdminPanel />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-export default App;
+export default AppContent;

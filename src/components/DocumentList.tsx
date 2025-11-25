@@ -3,6 +3,7 @@ import { Plus, Search, FileText, Clock, CheckCircle, Archive, AlertCircle } from
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getDocumentStatusColor } from '../lib/permissions';
 import { useDocuments } from '../hooks/useDocuments';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { DocumentWithCategory } from '../services/documentService';
 import type { Database } from '../lib/database.types';
 
@@ -24,9 +25,11 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
     setPage(0);
   }, [searchTerm, statusFilter]);
 
+  const debouncedSearch = useDebouncedValue(searchTerm, { delay: 300 });
+
   const filters = useMemo(
-    () => ({ searchTerm, status: statusFilter, page }),
-    [searchTerm, statusFilter, page],
+    () => ({ searchTerm: debouncedSearch, status: statusFilter, page }),
+    [debouncedSearch, statusFilter, page],
   );
 
   const { documents, total, pageSize, loading, error, reload } = useDocuments(filters, refreshToken);
@@ -101,6 +104,7 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              aria-label="Buscar documentos por título"
             />
           </div>
         </div>
@@ -110,6 +114,7 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filtrar documentos por status"
           >
             <option value="all">Todos os Status</option>
             <option value="Rascunho">Rascunho</option>
@@ -122,8 +127,9 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
             <button
               onClick={() => handleOpenEditor(null)}
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              aria-label="Criar novo documento"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5" aria-hidden="true" />
               <span className="hidden sm:inline">Novo Documento</span>
             </button>
           )}

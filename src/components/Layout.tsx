@@ -1,26 +1,26 @@
 import { ReactNode, useState } from 'react';
 import { LogOut, Menu, X, FileText, Settings, Home } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions } from '../lib/permissions';
 
 interface LayoutProps {
   children: ReactNode;
-  currentView: 'documents' | 'admin' | 'dashboard';
-  onNavigate: (view: 'documents' | 'admin' | 'dashboard') => void;
 }
 
-export function Layout({ children, currentView, onNavigate }: LayoutProps) {
+export function Layout({ children }: LayoutProps) {
   const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
   const permissions = getUserPermissions(profile?.role || null);
 
   const navigation = [
-    { name: 'Início', icon: Home, view: 'dashboard' as const, show: true },
-    { name: 'Documentos', icon: FileText, view: 'documents' as const, show: true },
+    { name: 'Início', icon: Home, path: '/', show: true },
+    { name: 'Documentos', icon: FileText, path: '/documentos', show: true },
     {
       name: 'Administração',
       icon: Settings,
-      view: 'admin' as const,
+      path: '/administracao',
       show: permissions.canManageUsers || permissions.canManageCategories
     },
   ];
@@ -47,28 +47,26 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
             </button>
           </div>
 
-          <nav className="p-4 space-y-1">
+          <nav className="p-4 space-y-1" role="navigation" aria-label="Menu principal">
             {navigation.filter(item => item.show).map((item) => {
               const Icon = item.icon;
-              const isActive = currentView === item.view;
               return (
-                <button
+                <NavLink
                   key={item.name}
-                  onClick={() => {
-                    onNavigate(item.view);
-                    setSidebarOpen(false);
-                  }}
-                  className={`
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) => `
                     w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
                     ${isActive
                       ? 'bg-blue-50 text-blue-700'
                       : 'text-gray-700 hover:bg-gray-50'
                     }
                   `}
+                  aria-label={`Navegar para ${item.name}`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">{item.name}</span>
-                </button>
+                </NavLink>
               );
             })}
           </nav>
@@ -104,15 +102,16 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden text-gray-500 hover:text-gray-700"
+              aria-label="Abrir menu lateral"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6" aria-hidden="true" />
             </button>
 
             <div className="flex-1 lg:ml-0">
               <h1 className="text-xl font-semibold text-gray-900">
-                {currentView === 'dashboard' && 'Início'}
-                {currentView === 'documents' && 'Documentos'}
-                {currentView === 'admin' && 'Administração'}
+                {location.pathname === '/' && 'Início'}
+                {location.pathname === '/documentos' && 'Documentos'}
+                {location.pathname === '/administracao' && 'Administração'}
               </h1>
             </div>
 
@@ -132,7 +131,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
             </div>
           </header>
 
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6" role="main">
             {children}
           </main>
         </div>
