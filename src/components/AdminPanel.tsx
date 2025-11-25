@@ -187,18 +187,45 @@ export function AdminPanel() {
         console.log('✅ Role deletada:', roleData);
       }
 
-      // Step 2: Check for foreign key constraints in other tables
-      console.log('📄 Verificando documentos do usuário...');
-      const { data: userDocs } = await supabaseAdmin
-        .from('documents')
-        .select('id')
-        .or(`created_by.eq.${deletingUser.id},approved_by.eq.${deletingUser.id}`);
+      // Step 2: Remove foreign key references that don't have CASCADE
+      console.log('🔗 Removendo referências de foreign keys...');
+      
+      // Update documents where user is approved_by (no CASCADE)
+      console.log('📄 Limpando approved_by em documents...');
+      try {
+        await (supabaseAdmin.rpc as any)('cleanup_user_references', { 
+          target_user_id: deletingUser.id 
+        });
+        console.log('✅ Referências limpas via RPC');
+      } catch (rpcError) {
+        // Fallback: try direct update with proper casting
+        console.log('⚠️ RPC não disponível, usando update direto...');
+        
+        const docsUpdate = await (supabaseAdmin
+          .from('documents') as any)
+          .update({ approved_by: null })
+          .eq('approved_by', deletingUser.id);
+        
+        if (docsUpdate.error) {
+          console.warn('⚠️ Erro ao limpar approved_by:', docsUpdate.error);
+        }
 
-      if (userDocs && userDocs.length > 0) {
-        console.warn(`⚠️ Usuário tem ${userDocs.length} documentos relacionados. Eles permanecerão com as referências.`);
+        const rolesUpdate = await (supabaseAdmin
+          .from('user_roles') as any)
+          .update({ assigned_by: null })
+          .eq('assigned_by', deletingUser.id);
+        
+        if (rolesUpdate.error) {
+          console.warn('⚠️ Erro ao limpar assigned_by:', rolesUpdate.error);
+        }
+        
+        console.log('✅ Referências limpas com updates diretos');
       }
 
-      // Step 3: Delete user from auth
+      // Note: document_history.changed_by and documents.author_id will cascade delete
+      // Comments will also cascade delete
+
+      // Step 3: Delete user from auth (after all references cleaned)
       console.log('👤 Deletando usuário do auth...');
       const { data: deleteData, error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(deletingUser.id);
       
