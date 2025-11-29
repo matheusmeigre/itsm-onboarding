@@ -118,7 +118,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Bem-vindo ao Portal de Documentação
         </h2>
@@ -128,19 +128,20 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card) => {
+        {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
             <div
               key={card.title}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer animate-in fade-in slide-in-from-bottom-4"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
+                  <p className="text-sm font-medium text-gray-600 transition-colors duration-300">{card.title}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2 transition-all duration-300 hover:text-blue-600">{card.value}</p>
                 </div>
-                <div className={`${card.color} p-3 rounded-lg`}>
+                <div className={`${card.color} p-3 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>

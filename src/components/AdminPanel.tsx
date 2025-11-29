@@ -294,11 +294,11 @@ export function AdminPanel() {
           <button
             onClick={() => setShowAddUser(true)}
             disabled={!isAdminAvailable}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             title={!isAdminAvailable ? 'Configuração de admin necessária' : ''}
           >
             <UserPlus className="w-5 h-5" />
-            <span>Adicionar Usuário</span>
+            <span className="font-medium">Adicionar Usuário</span>
           </button>
         )}
       </div>
@@ -360,7 +360,7 @@ export function AdminPanel() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
+              <tr key={user.id} className="hover:bg-blue-50 transition-all duration-200 hover:shadow-sm">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -398,7 +398,7 @@ export function AdminPanel() {
                             setEditEmail(user.email);
                             setEditRole(user.role || 'Analista');
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 hover:shadow-md"
                           title="Editar usuário"
                         >
                           <Pencil className="w-4 h-4" />
@@ -407,7 +407,7 @@ export function AdminPanel() {
                       {permissions.canDeleteUsers && user.id !== profile?.id && (
                         <button
                           onClick={() => setDeletingUser(user)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 hover:shadow-md"
                           title="Excluir usuário"
                         >
                           <Trash2 className="w-4 h-4" />

@@ -155,7 +155,7 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
               <div
                 key={doc.id}
                 onClick={() => handleOpenEditor(doc)}
-                className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="p-4 hover:bg-blue-50 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] hover:shadow-md border-l-4 border-transparent hover:border-blue-500"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -164,7 +164,7 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
                         {doc.title}
                       </h3>
                       <span className={`
-                        flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium
+                        flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium transition-all duration-300 hover:scale-110 hover:shadow-md
                         ${getDocumentStatusColor(doc.status)}
                       `}>
                         {getStatusIcon(doc.status)}
@@ -202,14 +202,14 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
             <button
               onClick={handlePreviousPage}
               disabled={page === 0}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-all duration-200 transform hover:scale-105 active:scale-95 hover:shadow-md"
             >
               Anterior
             </button>
             <button
               onClick={handleNextPage}
               disabled={page + 1 >= totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-all duration-200 transform hover:scale-105 active:scale-95 hover:shadow-md"
             >
               Próxima
             </button>
