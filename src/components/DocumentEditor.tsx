@@ -28,6 +28,7 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
+  const [version, setVersion] = useState<number>(1);
   const [status, setStatus] = useState<Database['public']['Tables']['documents']['Row']['status']>('Rascunho');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,7 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
       setTitle(document.title);
       setContent(document.content);
       setCategoryId(document.category_id || '');
+      setVersion(document.version);
       setStatus(document.status);
     }
   }, [document]);
@@ -112,11 +114,23 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
           content: validation.data.content,
           category_id: validation.data.category_id ?? null,
           status: validation.data.status,
+          version: version, // Incluir versão
         });
 
         if (error) {
           throw error;
         }
+
+        // Registrar no histórico
+        await supabase.from('document_history').insert({
+          document_id: document.id,
+          title: validation.data.title,
+          content: validation.data.content,
+          status: validation.data.status,
+          changed_by: profile.id,
+          change_type: 'updated',
+          version: version,
+        });
       }
 
       onSave();
@@ -236,24 +250,44 @@ export function DocumentEditor({ document, onClose, onSave }: DocumentEditorProp
             />
           </div>
 
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-              Categoria
-            </label>
-            <select
-              id="category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              disabled={!canEdit}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-            >
-              <option value="">Selecione uma categoria</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                Categoria
+              </label>
+              <select
+                id="category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                disabled={!canEdit}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {!isNewDocument && canEdit && (
+              <div>
+                <label htmlFor="version" className="block text-sm font-medium text-gray-700 mb-2">
+                  Versão
+                </label>
+                <input
+                  id="version"
+                  type="number"
+                  min="1"
+                  value={version}
+                  onChange={(e) => setVersion(parseInt(e.target.value) || 1)}
+                  disabled={!canEdit}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="Versão do documento"
+                />
+              </div>
+            )}
           </div>
 
           <div>

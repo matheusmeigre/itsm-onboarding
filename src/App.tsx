@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { DocumentList } from './components/DocumentList';
 import { DocumentEditor } from './components/DocumentEditor';
+import { DocumentViewer } from './components/DocumentViewer';
 import { AdminPanel } from './components/AdminPanel';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NotFound } from './components/NotFound';
@@ -16,12 +17,27 @@ type Document = Database['public']['Tables']['documents']['Row'];
 function AppContent() {
   const { user, loading } = useAuth();
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showViewer, setShowViewer] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [documentsRefreshToken, setDocumentsRefreshToken] = useState(0);
 
   const handleSelectDocument = (doc: Document | null) => {
     setSelectedDocument(doc);
+    if (doc) {
+      setShowViewer(true); // Abrir em modo leitura primeiro
+    } else {
+      setShowEditor(true); // Novo documento vai direto para editor
+    }
+  };
+
+  const handleEditFromViewer = () => {
+    setShowViewer(false);
     setShowEditor(true);
+  };
+
+  const handleCloseViewer = () => {
+    setShowViewer(false);
+    setSelectedDocument(null);
   };
 
   const handleCloseEditor = () => {
@@ -77,6 +93,13 @@ function AppContent() {
                 refreshToken={documentsRefreshToken}
                 statusFilter="all"
               />
+              {showViewer && selectedDocument && (
+                <DocumentViewer
+                  document={selectedDocument as any}
+                  onClose={handleCloseViewer}
+                  onEdit={handleEditFromViewer}
+                />
+              )}
               {showEditor && (
                 <DocumentEditor
                   document={selectedDocument}
@@ -99,6 +122,13 @@ function AppContent() {
                 refreshToken={documentsRefreshToken}
                 statusFilter="Aprovado"
               />
+              {showViewer && selectedDocument && (
+                <DocumentViewer
+                  document={selectedDocument as any}
+                  onClose={handleCloseViewer}
+                  onEdit={handleEditFromViewer}
+                />
+              )}
               {showEditor && (
                 <DocumentEditor
                   document={selectedDocument}
@@ -121,6 +151,13 @@ function AppContent() {
                 refreshToken={documentsRefreshToken}
                 statusFilter="Aguardando Aprovação"
               />
+              {showViewer && selectedDocument && (
+                <DocumentViewer
+                  document={selectedDocument as any}
+                  onClose={handleCloseViewer}
+                  onEdit={handleEditFromViewer}
+                />
+              )}
               {showEditor && (
                 <DocumentEditor
                   document={selectedDocument}
@@ -144,6 +181,13 @@ function AppContent() {
                 statusFilter="Rascunho"
                 myDocumentsOnly={true}
               />
+              {showViewer && selectedDocument && (
+                <DocumentViewer
+                  document={selectedDocument as any}
+                  onClose={handleCloseViewer}
+                  onEdit={handleEditFromViewer}
+                />
+              )}
               {showEditor && (
                 <DocumentEditor
                   document={selectedDocument}
