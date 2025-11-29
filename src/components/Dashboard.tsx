@@ -116,6 +116,13 @@ export function Dashboard() {
     );
   }
 
+  const cardRoutes = [
+    '/documentos',
+    '/documentos-aprovados',
+    '/aguardando-aprovacao',
+    '/meus-rascunhos',
+  ];
+
   return (
     <div className="space-y-6">
       <div className="animate-in fade-in slide-in-from-top-4 duration-500">
@@ -131,9 +138,10 @@ export function Dashboard() {
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <div
+            <a
               key={card.title}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer animate-in fade-in slide-in-from-bottom-4"
+              href={cardRoutes[index]}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer animate-in fade-in slide-in-from-bottom-4 block"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-center justify-between">
@@ -145,7 +153,7 @@ export function Dashboard() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-            </div>
+            </a>
           );
         })}
       </div>

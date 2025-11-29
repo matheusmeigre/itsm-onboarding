@@ -15,10 +15,12 @@ const PAGE_SIZE = 20;
 export interface DocumentFilters {
   searchTerm: string;
   status: string;
+  category?: string;
   page: number;
+  authorId?: string;
 }
 
-export async function fetchDocuments({ searchTerm, status, page }: DocumentFilters) {
+export async function fetchDocuments({ searchTerm, status, category, page, authorId }: DocumentFilters) {
   const from = page * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -36,6 +38,14 @@ export async function fetchDocuments({ searchTerm, status, page }: DocumentFilte
     query = query.eq('status', status);
   }
 
+  if (category && category !== 'all') {
+    query = query.eq('category_id', category);
+  }
+
+  if (authorId) {
+    query = query.eq('author_id', authorId);
+  }
+
   const { data, error, count } = await query;
 
   return {
@@ -43,6 +53,18 @@ export async function fetchDocuments({ searchTerm, status, page }: DocumentFilte
     error,
     total: count ?? 0,
     pageSize: PAGE_SIZE,
+  };
+}
+
+export async function fetchCategories() {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name', { ascending: true });
+
+  return {
+    data: data ?? [],
+    error,
   };
 }
 

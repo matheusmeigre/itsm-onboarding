@@ -75,6 +75,74 @@ function AppContent() {
               <DocumentList
                 onSelectDocument={handleSelectDocument}
                 refreshToken={documentsRefreshToken}
+                statusFilter="all"
+              />
+              {showEditor && (
+                <DocumentEditor
+                  document={selectedDocument}
+                  onClose={handleCloseEditor}
+                  onSave={handleSaveDocument}
+                />
+              )}
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/documentos-aprovados"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <DocumentList
+                onSelectDocument={handleSelectDocument}
+                refreshToken={documentsRefreshToken}
+                statusFilter="Aprovado"
+              />
+              {showEditor && (
+                <DocumentEditor
+                  document={selectedDocument}
+                  onClose={handleCloseEditor}
+                  onSave={handleSaveDocument}
+                />
+              )}
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/aguardando-aprovacao"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <DocumentList
+                onSelectDocument={handleSelectDocument}
+                refreshToken={documentsRefreshToken}
+                statusFilter="Aguardando Aprovação"
+              />
+              {showEditor && (
+                <DocumentEditor
+                  document={selectedDocument}
+                  onClose={handleCloseEditor}
+                  onSave={handleSaveDocument}
+                />
+              )}
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/meus-rascunhos"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <DocumentList
+                onSelectDocument={handleSelectDocument}
+                refreshToken={documentsRefreshToken}
+                statusFilter="Rascunho"
+                myDocumentsOnly={true}
               />
               {showEditor && (
                 <DocumentEditor
@@ -91,7 +159,7 @@ function AppContent() {
       <Route
         path="/administracao"
         element={
-          <ProtectedRoute requiredRole="Gerente">
+          <ProtectedRoute requiredRoles={["Gerente", "Coordenador"]}>
             <Layout>
               <AdminPanel />
             </Layout>

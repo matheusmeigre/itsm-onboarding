@@ -3,7 +3,7 @@ import { Plus, Search, FileText, Clock, CheckCircle, Archive, AlertCircle } from
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions, getDocumentStatusColor } from '../lib/permissions';
 import { useDocuments } from '../hooks/useDocuments';
-import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { fetchCategories } from '../services/documentService';
 import type { DocumentWithCategory } from '../services/documentService';
 import type { Database } from '../lib/database.types';
 import { SkeletonCard } from './ui/Skeleton';
@@ -13,24 +13,44 @@ type Document = Database['public']['Tables']['documents']['Row'];
 interface DocumentListProps {
   onSelectDocument: (doc: Document | null) => void;
   refreshToken: number;
+  statusFilter?: string;
+  myDocumentsOnly?: boolean;
 }
 
-export function DocumentList({ onSelectDocument, refreshToken }: DocumentListProps) {
+export function DocumentList({ onSelectDocument, refreshToken, statusFilter: initialStatusFilter = 'all', myDocumentsOnly = false }: DocumentListProps) {
   const { profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [page, setPage] = useState(0);
   const permissions = getUserPermissions(profile?.role || null);
 
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, categoryFilter]);
 
-  const debouncedSearch = useDebouncedValue(searchTerm, { delay: 300 });
+  useEffect(() => {
+    setStatusFilter(initialStatusFilter);
+  }, [initialStatusFilter]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data } = await fetchCategories();
+      setCategories(data);
+    };
+    loadCategories();
+  }, []);
 
   const filters = useMemo(
-    () => ({ searchTerm: debouncedSearch, status: statusFilter, page }),
-    [debouncedSearch, statusFilter, page],
+    () => ({ 
+      searchTerm, 
+      status: statusFilter, 
+      category: categoryFilter,
+      page,
+      authorId: myDocumentsOnly ? profile?.id : undefined
+    }),
+    [searchTerm, statusFilter, categoryFilter, page, myDocumentsOnly, profile?.id],
   );
 
   const { documents, total, pageSize, loading, error, reload } = useDocuments(filters, refreshToken);
@@ -110,18 +130,33 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
           </div>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto flex-wrap">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             aria-label="Filtrar documentos por status"
+            disabled={initialStatusFilter !== 'all'}
           >
             <option value="all">Todos os Status</option>
             <option value="Rascunho">Rascunho</option>
             <option value="Aguardando Aprovação">Aguardando Aprovação</option>
             <option value="Aprovado">Aprovado</option>
             <option value="Arquivado">Arquivado</option>
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Filtrar documentos por categoria"
+          >
+            <option value="all">Todas as Categorias</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
 
           {permissions.canCreate && (

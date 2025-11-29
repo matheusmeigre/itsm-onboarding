@@ -6,9 +6,10 @@ import type { UserRoleType } from '../lib/database.types';
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: UserRoleType;
+  requiredRoles?: UserRoleType[];
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, requiredRoles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
 
   if (loading) {
@@ -23,7 +24,13 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/login" replace />;
   }
 
+  // Check single role
   if (requiredRole && profile?.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Check multiple roles
+  if (requiredRoles && profile?.role && !requiredRoles.includes(profile.role)) {
     return <Navigate to="/" replace />;
   }
 

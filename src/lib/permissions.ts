@@ -12,6 +12,19 @@ export interface PermissionCheck {
   canManageCategories: boolean;
 }
 
+export interface PermissionCheck {
+  canCreate: boolean;
+  canEdit: boolean;
+  canApprove: boolean;
+  canDelete: boolean;
+  canManageUsers: boolean;
+  canViewUsers: boolean;
+  canEditUsers: boolean;
+  canDeleteUsers: boolean;
+  canManageCategories: boolean;
+  canCreateUsers: boolean;
+}
+
 export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
   if (!role) {
     return {
@@ -24,6 +37,7 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
       canEditUsers: false,
       canDeleteUsers: false,
       canManageCategories: false,
+      canCreateUsers: false,
     };
   }
 
@@ -39,6 +53,7 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canEditUsers: false,
         canDeleteUsers: false,
         canManageCategories: false,
+        canCreateUsers: false,
       };
 
     case 'Coordenador':
@@ -52,6 +67,7 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canEditUsers: false,
         canDeleteUsers: false,
         canManageCategories: true,
+        canCreateUsers: true, // Pode criar, mas fica pendente
       };
 
     case 'Gerente':
@@ -65,6 +81,7 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canEditUsers: true,
         canDeleteUsers: true,
         canManageCategories: true,
+        canCreateUsers: true, // Cria diretamente
       };
 
     default:
@@ -78,6 +95,7 @@ export function getUserPermissions(role: UserRoleType | null): PermissionCheck {
         canEditUsers: false,
         canDeleteUsers: false,
         canManageCategories: false,
+        canCreateUsers: false,
       };
   }
 }
