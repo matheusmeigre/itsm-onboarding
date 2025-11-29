@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FileText, CheckCircle, Clock, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchDashboardStats } from '../services/documentService';
+import { Skeleton } from './ui/Skeleton';
 
 interface Stats {
   totalDocuments: number;
@@ -79,8 +80,24 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Carregando...</div>
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-3" />
+                  <Skeleton className="h-10 w-16" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

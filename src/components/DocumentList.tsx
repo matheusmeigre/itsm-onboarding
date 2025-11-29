@@ -6,6 +6,7 @@ import { useDocuments } from '../hooks/useDocuments';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { DocumentWithCategory } from '../services/documentService';
 import type { Database } from '../lib/database.types';
+import { SkeletonCard } from './ui/Skeleton';
 
 type Document = Database['public']['Tables']['documents']['Row'];
 
@@ -137,7 +138,13 @@ export function DocumentList({ onSelectDocument, refreshToken }: DocumentListPro
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {documents.length === 0 ? (
+        {loading ? (
+          <div className="p-4 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : documents.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">Nenhum documento encontrado</p>
