@@ -112,7 +112,7 @@ export const ConfirmDialog = ({
     >
       <div
         ref={dialogRef}
-        className="bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-lg shadow-xl max-w-md w-full transform smooth-transition animate-scaleIn"
       >
         {/* Header */}
         <div className="flex items-start space-x-3 p-6 pb-4">

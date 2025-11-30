@@ -50,7 +50,7 @@ export function DocumentViewer({ document, onClose, onEdit }: DocumentViewerProp
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
             <div className="flex-1">
@@ -73,7 +73,7 @@ export function DocumentViewer({ document, onClose, onEdit }: DocumentViewerProp
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+              className="text-gray-400 hover:text-gray-600 smooth-transition p-2 hover:bg-gray-100 rounded-lg"
             >
               <X className="w-6 h-6" />
             </button>
@@ -131,7 +131,7 @@ export function DocumentViewer({ document, onClose, onEdit }: DocumentViewerProp
             {canEditDoc && (
               <button
                 onClick={onEdit}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 font-medium"
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg smooth-transition hover-lift font-medium"
               >
                 <Edit className="w-5 h-5" />
                 <span>Alterar</span>

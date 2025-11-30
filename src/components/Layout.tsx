@@ -1,8 +1,9 @@
-import { ReactNode, useState } from 'react';
-import { LogOut, Menu, X, FileText, Settings, Home } from 'lucide-react';
+import { ReactNode, useState, useEffect } from 'react';
+import { LogOut, Menu, X, FileText, Settings, Home, User } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserPermissions } from '../lib/permissions';
+import { supabase } from '../lib/supabase';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,8 +12,31 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string>('👤');
   const location = useLocation();
   const permissions = getUserPermissions(profile?.role || null);
+
+  useEffect(() => {
+    loadUserAvatar();
+  }, [profile?.id]);
+
+  const loadUserAvatar = async () => {
+    if (!profile?.id) return;
+
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar')
+        .eq('id', profile.id)
+        .single();
+
+      if (data?.avatar) {
+        setUserAvatar(data.avatar);
+      }
+    } catch (err) {
+      console.error('Error loading avatar:', err);
+    }
+  };
 
   const navigation = [
     { name: 'Início', icon: Home, path: '/', show: true },
@@ -29,7 +53,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-gray-50">
       <div className="lg:flex">
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform smooth-transition lg:translate-x-0 lg:static lg:inset-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
@@ -56,10 +80,10 @@ export function Layout({ children }: LayoutProps) {
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `
-                    w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
+                    w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition
                     ${isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-blue-50 text-blue-700 shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1'
                     }
                   `}
                   aria-label={`Navegar para ${item.name}`}
@@ -71,21 +95,32 @@ export function Layout({ children }: LayoutProps) {
             })}
           </nav>
 
-          <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
-            <div className="mb-3">
-              <div className="text-sm font-medium text-gray-900">{profile?.email}</div>
-              {profile?.role && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Função: {profile.role}
-                </div>
-              )}
-            </div>
+          <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 space-y-2">
+            <NavLink
+              to="/perfil"
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) => `
+                w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition
+                ${isActive
+                  ? 'bg-blue-50 text-blue-700 shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-50 hover-lift'
+                }
+              `}
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-lg smooth-transition group-hover:scale-110">
+                {userAvatar}
+              </div>
+              <div className="flex-1 text-left">
+                <div className="text-sm font-medium">Meu Perfil</div>
+                <div className="text-xs text-gray-500">{profile?.email}</div>
+              </div>
+            </NavLink>
             <button
               onClick={signOut}
-              className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg smooth-transition hover-lift"
             >
               <LogOut className="w-5 h-5" />
-              <span>Sair</span>
+              <span className="font-medium">Sair</span>
             </button>
           </div>
         </div>
@@ -112,22 +147,29 @@ export function Layout({ children }: LayoutProps) {
                 {location.pathname === '/' && 'Início'}
                 {location.pathname === '/documentos' && 'Documentos'}
                 {location.pathname === '/administracao' && 'Administração'}
+                {location.pathname === '/perfil' && 'Meu Perfil'}
               </h1>
             </div>
 
             <div className="flex items-center space-x-4">
-              {profile?.role && (
-                <div className="hidden sm:block">
+              <NavLink
+                to="/perfil"
+                className="hidden sm:flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-50 smooth-transition hover-lift group"
+              >
+                {profile?.role && (
                   <span className={`
-                    px-3 py-1 rounded-full text-xs font-medium
-                    ${profile.role === 'Gerente' ? 'bg-red-100 text-red-800' : ''}
-                    ${profile.role === 'Coordenador' ? 'bg-purple-100 text-purple-800' : ''}
-                    ${profile.role === 'Analista' ? 'bg-blue-100 text-blue-800' : ''}
+                    px-3 py-1 rounded-full text-xs font-medium smooth-transition
+                    ${profile.role === 'Gerente' ? 'bg-red-100 text-red-800 group-hover:bg-red-200' : ''}
+                    ${profile.role === 'Coordenador' ? 'bg-purple-100 text-purple-800 group-hover:bg-purple-200' : ''}
+                    ${profile.role === 'Analista' ? 'bg-blue-100 text-blue-800 group-hover:bg-blue-200' : ''}
                   `}>
                     {profile.role}
                   </span>
+                )}
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-xl smooth-transition group-hover:scale-110 shadow-sm">
+                  {userAvatar}
                 </div>
-              )}
+              </NavLink>
             </div>
           </header>
 

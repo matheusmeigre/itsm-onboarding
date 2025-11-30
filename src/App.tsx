@@ -8,6 +8,7 @@ import { DocumentList } from './components/DocumentList';
 import { DocumentEditor } from './components/DocumentEditor';
 import { DocumentViewer } from './components/DocumentViewer';
 import { AdminPanel } from './components/AdminPanel';
+import { UserProfile } from './components/UserProfile';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NotFound } from './components/NotFound';
 import type { Database } from './lib/database.types';
@@ -206,6 +207,17 @@ function AppContent() {
           <ProtectedRoute requiredRoles={["Gerente", "Coordenador"]}>
             <Layout>
               <AdminPanel />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <UserProfile />
             </Layout>
           </ProtectedRoute>
         }

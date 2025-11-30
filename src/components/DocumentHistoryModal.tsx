@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Clock, User, FileText, GitBranch, Circle } from 'lucide-react';
+import { X, Clock, User, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 type DocumentHistory = {
@@ -247,7 +247,7 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col animate-scaleIn">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -292,7 +292,7 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
                 {history.map((entry, index) => (
                   <div
                     key={entry.id}
-                    className="relative pl-10 pb-8 last:pb-0 animate-in fade-in slide-in-from-left-2"
+                    className="relative pl-10 pb-8 last:pb-0 animate-slideInLeft"
                     style={{ animationDelay: `${index * 75}ms` }}
                   >
                     {/* Círculo do commit (nó da ramificação) */}
@@ -307,7 +307,7 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
                     </div>
 
                     {/* Card do commit */}
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow-md transition-all duration-200">
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow-md smooth-transition hover-lift">
                       {/* Header do commit */}
                       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 rounded-t-lg">
                         <div className="flex items-center justify-between">

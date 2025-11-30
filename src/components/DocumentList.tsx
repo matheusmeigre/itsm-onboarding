@@ -105,7 +105,7 @@ export function DocumentList({ onSelectDocument, refreshToken, statusFilter: ini
         <div className="text-red-600 font-medium">{error}</div>
         <button
           onClick={() => reload()}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg smooth-transition hover-lift"
         >
           Tentar novamente
         </button>
@@ -190,7 +190,7 @@ export function DocumentList({ onSelectDocument, refreshToken, statusFilter: ini
               <div
                 key={doc.id}
                 onClick={() => handleOpenEditor(doc)}
-                className="p-4 hover:bg-blue-50 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] hover:shadow-md border-l-4 border-transparent hover:border-blue-500"
+                className="p-4 hover:bg-blue-50 cursor-pointer smooth-transition hover-lift border-l-4 border-transparent hover:border-blue-500"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

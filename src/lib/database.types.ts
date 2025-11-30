@@ -13,6 +13,44 @@ export type ChangeType = 'created' | 'updated' | 'approved' | 'archived' | 'rest
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          role: UserRoleType | null;
+          first_name: string | null;
+          last_name: string | null;
+          age: string | null;
+          bio: string | null;
+          avatar: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          role?: UserRoleType | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          age?: string | null;
+          bio?: string | null;
+          avatar?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          role?: UserRoleType | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          age?: string | null;
+          bio?: string | null;
+          avatar?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       user_roles: {
         Row: {
           id: string;

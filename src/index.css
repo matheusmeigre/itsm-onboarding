@@ -1,3 +1,213 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    @apply transition-none;
+  }
+}
+
+@layer utilities {
+  /* Animações suaves e naturais */
+  .smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .smooth-transition-fast {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .smooth-transition-slow {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Fade in natural */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  /* Slide in suave do topo */
+  @keyframes slideInTop {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slideInTop {
+    animation: slideInTop 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Slide in suave da esquerda */
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slideInLeft {
+    animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Slide in suave da direita */
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slideInRight {
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Slide in suave de baixo */
+  @keyframes slideInBottom {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slideInBottom {
+    animation: slideInBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Scale in suave (zoom) */
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Hover lift suave */
+  .hover-lift {
+    @apply smooth-transition;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .hover-lift:active {
+    transform: translateY(0);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Pulse suave para loading */
+  @keyframes smoothPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .animate-smoothPulse {
+    animation: smoothPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Shimmer effect para skeleton */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      to right,
+      #f3f4f6 0%,
+      #e5e7eb 20%,
+      #f3f4f6 40%,
+      #f3f4f6 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Bounce suave para notificações */
+  @keyframes softBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-softBounce {
+    animation: softBounce 0.6s ease-in-out;
+  }
+
+  /* Spin suave para loading */
+  @keyframes smoothSpin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-smoothSpin {
+    animation: smoothSpin 1s linear infinite;
+  }
+
+  /* Backdrop blur gradual */
+  @keyframes backdropFadeIn {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(4px);
+    }
+  }
+
+  .animate-backdropFadeIn {
+    animation: backdropFadeIn 0.3s ease-out forwards;
+  }
+}
