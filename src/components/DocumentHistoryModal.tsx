@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Clock, User, FileText } from 'lucide-react';
+import { X, Clock, User, FileText, GitBranch, Circle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 type DocumentHistory = {
@@ -37,30 +37,60 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
     setError('');
 
     try {
-      const { data, error: fetchError } = await supabase
+      // Buscar histórico do documento
+      const { data: historyData, error: historyError } = await supabase
         .from('document_history')
         .select('*')
         .eq('document_id', documentId)
-        .order('changed_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (historyError) throw historyError;
 
-      // Mapear histórico com tipo correto
-      const historyData = (data as any[]) || [];
-      const historyWithEmails: DocumentHistory[] = historyData.map((h: any) => ({
-        id: h.id,
-        document_id: h.document_id,
-        title: h.title,
-        content: h.content,
-        status: h.status,
-        changed_by: h.changed_by,
-        change_type: h.change_type,
-        version: h.version,
-        changed_at: h.changed_at,
-        user_email: 'Usuário',
-      }));
+      // Se não há histórico, buscar dados do documento para criar entrada de criação
+      if (!historyData || historyData.length === 0) {
+        const { data: docData, error: docError } = await supabase
+          .from('documents')
+          .select('*')
+          .eq('id', documentId)
+          .single();
 
-      setHistory(historyWithEmails);
+        if (docError) throw docError;
+
+        const doc = docData as any;
+        if (doc) {
+          const creationEntry: DocumentHistory = {
+            id: 'creation',
+            document_id: doc.id,
+            title: doc.title,
+            content: doc.content,
+            status: doc.status,
+            changed_by: doc.author_id,
+            change_type: 'created',
+            version: doc.version,
+            changed_at: doc.created_at,
+            user_email: 'Autor',
+          };
+          setHistory([creationEntry]);
+        } else {
+          setHistory([]);
+        }
+      } else {
+        // Mapear histórico com tipo correto
+        const mappedHistory: DocumentHistory[] = historyData.map((h: any) => ({
+          id: h.id,
+          document_id: h.document_id,
+          title: h.title,
+          content: h.content,
+          status: h.status,
+          changed_by: h.changed_by,
+          change_type: h.change_type,
+          version: h.version,
+          changed_at: h.created_at || h.changed_at,
+          user_email: 'Usuário',
+        }));
+
+        setHistory(mappedHistory);
+      }
     } catch (err) {
       console.error('Error loading document history:', err);
       setError('Erro ao carregar histórico do documento');
@@ -142,56 +172,94 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
               <p className="text-gray-500">Nenhuma alteração registrada</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {history.map((entry, index) => (
-                <div
-                  key={entry.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  {/* Header da entrada */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getChangeTypeColor(entry.change_type)}`}>
-                        {getChangeTypeLabel(entry.change_type)}
-                      </span>
-                      <span className="text-sm font-medium text-gray-700">
-                        Versão {entry.version}
-                      </span>
+            <div className="relative">
+              {/* Linha vertical de ramificação (estilo GitHub) */}
+              <div className="absolute left-[13px] top-8 bottom-8 w-[2px] bg-gray-300"></div>
+              
+              {/* Lista de commits */}
+              <div className="space-y-0">
+                {history.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className="relative pl-10 pb-8 last:pb-0 animate-in fade-in slide-in-from-left-2"
+                    style={{ animationDelay: `${index * 75}ms` }}
+                  >
+                    {/* Círculo do commit (nó da ramificação) */}
+                    <div className={`absolute left-0 top-0 w-7 h-7 rounded-full border-2 border-gray-300 flex items-center justify-center ${
+                      entry.change_type === 'created' ? 'bg-green-500' :
+                      entry.change_type === 'updated' ? 'bg-blue-500' :
+                      entry.change_type === 'approved' ? 'bg-purple-500' :
+                      entry.change_type === 'status_changed' ? 'bg-yellow-500' :
+                      'bg-gray-500'
+                    }`}>
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600 flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{new Date(entry.changed_at).toLocaleString('pt-BR')}</span>
+
+                    {/* Card do commit */}
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow-md transition-all duration-200">
+                      {/* Header do commit */}
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getChangeTypeColor(entry.change_type)}`}>
+                              {getChangeTypeLabel(entry.change_type)}
+                            </span>
+                            <span className="text-sm font-mono text-gray-600">
+                              v{entry.version}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <User className="w-4 h-4" />
+                            <span className="font-medium">{entry.user_email}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 flex items-center space-x-1 mt-1">
-                        <User className="w-3 h-3" />
-                        <span>{entry.user_email}</span>
+
+                      {/* Corpo do commit */}
+                      <div className="px-4 py-3">
+                        <h4 className="font-semibold text-gray-900 mb-2">{entry.title}</h4>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{new Date(entry.changed_at).toLocaleString('pt-BR', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className="font-medium">Status:</span>
+                            <span className={`px-2 py-0.5 rounded ${
+                              entry.status === 'Aprovado' ? 'bg-green-100 text-green-800' :
+                              entry.status === 'Aguardando Aprovação' ? 'bg-yellow-100 text-yellow-800' :
+                              entry.status === 'Rascunho' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {entry.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Preview do conteúdo */}
+                        <details className="group">
+                          <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-medium list-none flex items-center space-x-1">
+                            <span className="group-open:hidden">▶ Ver alterações</span>
+                            <span className="hidden group-open:inline">▼ Ocultar alterações</span>
+                          </summary>
+                          <div className="mt-3 bg-gray-50 border border-gray-200 rounded p-3 text-sm">
+                            <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 overflow-x-auto">
+{entry.content.length > 500 ? `${entry.content.substring(0, 500)}...` : entry.content}
+                            </pre>
+                          </div>
+                        </details>
                       </div>
                     </div>
                   </div>
-
-                  {/* Detalhes da mudança */}
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase">Título:</span>
-                      <p className="text-sm text-gray-900 mt-1">{entry.title}</p>
-                    </div>
-                    
-                    <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase">Status:</span>
-                      <p className="text-sm text-gray-900 mt-1">{entry.status}</p>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase">Conteúdo:</span>
-                      <div className="text-sm text-gray-700 mt-1 bg-gray-50 p-3 rounded border border-gray-200 max-h-32 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap font-sans">{entry.content.substring(0, 200)}...</pre>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
