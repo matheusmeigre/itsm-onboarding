@@ -51,28 +51,32 @@ export function Layout({ children }: LayoutProps) {
   const renderAvatar = (color: string, size: 'sm' | 'md' = 'md') => {
     const sizeClasses = size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
     return (
-      <div className={`${sizeClasses} ${color} rounded-full flex items-center justify-center relative overflow-hidden shadow-md smooth-transition group-hover:scale-110`}>
+      <div className={`${sizeClasses} ${color} rounded-full flex items-center justify-center relative overflow-hidden shadow-md smooth-transition group-hover:scale-110 flex-shrink-0`}>
         <div className="absolute inset-0 flex items-end justify-center">
-          <div className="relative" style={{ width: '70%', height: '70%' }}>
-            <div className="absolute top-[15%] left-1/2 transform -translate-x-1/2 w-[35%] h-[35%] bg-white/90 rounded-full"></div>
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[70%] h-[55%] bg-white/90 rounded-t-full"></div>
+          <div className="relative w-full h-full flex items-end justify-center">
+            <div className="absolute" style={{ top: '20%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '35%' }}>
+              <div className="w-full h-full bg-white/90 rounded-full"></div>
+            </div>
+            <div className="absolute" style={{ bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '70%', height: '50%' }}>
+              <div className="w-full h-full bg-white/90 rounded-t-full"></div>
+            </div>
           </div>
         </div>
       </div>
     );
   };
 
-  // Função para obter cor da borda baseada no role
-  const getRoleBorderColor = (role: string | null) => {
+  // Função para obter cor do texto baseada no role
+  const getRoleTextColor = (role: string | null) => {
     switch (role) {
       case 'Gerente':
-        return 'border-red-500';
+        return 'text-red-600';
       case 'Coordenador':
-        return 'border-purple-500';
+        return 'text-purple-600';
       case 'Analista':
-        return 'border-blue-500';
+        return 'text-blue-600';
       default:
-        return 'border-gray-300';
+        return 'text-gray-600';
     }
   };
 
@@ -138,18 +142,17 @@ export function Layout({ children }: LayoutProps) {
               to="/perfil"
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `
-                group w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition border-2
-                ${getRoleBorderColor(profile?.role || null)}
+                group w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition
                 ${isActive
                   ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-50 hover-lift bg-white'
+                  : 'text-gray-700 hover:bg-gray-50 hover-lift'
                 }
               `}
             >
               {renderAvatar(userAvatar, 'sm')}
-              <div className="flex-1 text-left">
+              <div className="flex-1 text-left min-w-0">
                 <div className="text-xs font-semibold text-gray-500 uppercase">Meu Perfil</div>
-                <div className="text-sm font-medium text-gray-900">{profile?.role || 'Usuário'}</div>
+                <div className={`text-sm font-bold ${getRoleTextColor(profile?.role || null)}`}>{profile?.role || 'Usuário'}</div>
                 <div className="text-xs text-gray-500 truncate">{profile?.email}</div>
               </div>
             </NavLink>
