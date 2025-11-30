@@ -129,6 +129,117 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
     }
   };
 
+  // Função para calcular diff entre duas versões
+  const calculateDiff = (oldContent: string, newContent: string) => {
+    const oldLines = oldContent.split('\n');
+    const newLines = newContent.split('\n');
+    const diff: Array<{ type: 'added' | 'removed' | 'unchanged'; content: string }> = [];
+
+    // Algoritmo simples de diff linha por linha
+    let oldIndex = 0;
+    let newIndex = 0;
+
+    while (oldIndex < oldLines.length || newIndex < newLines.length) {
+      const oldLine = oldLines[oldIndex] || '';
+      const newLine = newLines[newIndex] || '';
+
+      if (oldIndex >= oldLines.length) {
+        // Só restam linhas novas
+        diff.push({ type: 'added', content: newLine });
+        newIndex++;
+      } else if (newIndex >= newLines.length) {
+        // Só restam linhas antigas (removidas)
+        diff.push({ type: 'removed', content: oldLine });
+        oldIndex++;
+      } else if (oldLine === newLine) {
+        // Linhas iguais
+        diff.push({ type: 'unchanged', content: oldLine });
+        oldIndex++;
+        newIndex++;
+      } else {
+        // Linhas diferentes - verificar se é adição ou remoção
+        // Procurar a linha antiga nas próximas linhas novas
+        const foundInNew = newLines.slice(newIndex).indexOf(oldLine);
+        // Procurar a linha nova nas próximas linhas antigas
+        const foundInOld = oldLines.slice(oldIndex).indexOf(newLine);
+
+        if (foundInNew !== -1 && (foundInOld === -1 || foundInNew < foundInOld)) {
+          // A linha antiga existe mais à frente no novo, então as linhas atuais são adições
+          diff.push({ type: 'added', content: newLine });
+          newIndex++;
+        } else if (foundInOld !== -1) {
+          // A linha nova existe mais à frente no antigo, então a linha atual foi removida
+          diff.push({ type: 'removed', content: oldLine });
+          oldIndex++;
+        } else {
+          // Ambas as linhas são diferentes - marcar como remoção + adição
+          diff.push({ type: 'removed', content: oldLine });
+          diff.push({ type: 'added', content: newLine });
+          oldIndex++;
+          newIndex++;
+        }
+      }
+    }
+
+    return diff;
+  };
+
+  // Função para renderizar diff com cores
+  const renderDiff = (currentEntry: DocumentHistory, index: number) => {
+    // Para o primeiro item (mais recente) ou criação, mostrar conteúdo completo
+    if (index === history.length - 1 || currentEntry.change_type === 'created') {
+      return (
+        <div className="mt-3 bg-gray-50 border border-gray-200 rounded overflow-hidden">
+          <div className="bg-gray-700 text-gray-300 px-3 py-2 text-xs font-mono border-b border-gray-600">
+            Conteúdo inicial
+          </div>
+          <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 p-3 overflow-x-auto max-h-96">
+            {currentEntry.content}
+          </pre>
+        </div>
+      );
+    }
+
+    // Para outros items, calcular diff com a versão anterior
+    const previousEntry = history[index + 1];
+    const diff = calculateDiff(previousEntry.content, currentEntry.content);
+
+    return (
+      <div className="mt-3 border border-gray-300 rounded overflow-hidden">
+        <div className="bg-gray-700 text-gray-300 px-3 py-2 text-xs font-mono border-b border-gray-600 flex items-center justify-between">
+          <span>Alterações em relação à versão anterior (v{previousEntry.version})</span>
+          <div className="flex items-center space-x-3">
+            <span className="text-green-400">
+              +{diff.filter(d => d.type === 'added').length}
+            </span>
+            <span className="text-red-400">
+              -{diff.filter(d => d.type === 'removed').length}
+            </span>
+          </div>
+        </div>
+        <div className="overflow-x-auto max-h-96 bg-white">
+          {diff.map((line, lineIndex) => (
+            <div
+              key={lineIndex}
+              className={`font-mono text-xs px-3 py-0.5 ${
+                line.type === 'added'
+                  ? 'bg-green-50 text-green-900 border-l-4 border-green-500'
+                  : line.type === 'removed'
+                  ? 'bg-red-50 text-red-900 border-l-4 border-red-500'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <span className="select-none inline-block w-6 text-gray-400 mr-2">
+                {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
+              </span>
+              <span className="whitespace-pre-wrap">{line.content || ' '}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -243,17 +354,13 @@ export function DocumentHistoryModal({ documentId, isOpen, onClose }: DocumentHi
                           </div>
                         </div>
 
-                        {/* Preview do conteúdo */}
+                        {/* Preview do conteúdo com diff */}
                         <details className="group">
                           <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-medium list-none flex items-center space-x-1">
                             <span className="group-open:hidden">▶ Ver alterações</span>
                             <span className="hidden group-open:inline">▼ Ocultar alterações</span>
                           </summary>
-                          <div className="mt-3 bg-gray-50 border border-gray-200 rounded p-3 text-sm">
-                            <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 overflow-x-auto">
-{entry.content.length > 500 ? `${entry.content.substring(0, 500)}...` : entry.content}
-                            </pre>
-                          </div>
+                          {renderDiff(entry, index)}
                         </details>
                       </div>
                     </div>
