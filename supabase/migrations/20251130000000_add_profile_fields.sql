@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_name text,
   age text,
   bio text,
-  avatar text DEFAULT '👤',
+  avatar text DEFAULT 'bg-gray-400',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -59,7 +59,7 @@ CREATE OR REPLACE FUNCTION create_profile_on_signup()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO profiles (id, email, avatar)
-  VALUES (NEW.id, NEW.email, '👤')
+  VALUES (NEW.id, NEW.email, 'bg-gray-400')
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
@@ -76,7 +76,7 @@ SELECT
   u.id,
   u.email,
   ur.role,
-  '👤'
+  'bg-gray-400'
 FROM auth.users u
 LEFT JOIN user_roles ur ON ur.user_id = u.id
 ON CONFLICT (id) DO UPDATE SET

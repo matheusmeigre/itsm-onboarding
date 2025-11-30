@@ -12,13 +12,22 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string>('👤');
+  const [userAvatar, setUserAvatar] = useState<string>('bg-gray-400');
   const location = useLocation();
   const permissions = getUserPermissions(profile?.role || null);
 
   useEffect(() => {
     loadUserAvatar();
   }, [profile?.id]);
+
+  useEffect(() => {
+    // Escuta evento de atualização de perfil
+    const handleProfileUpdate = () => {
+      loadUserAvatar();
+    };
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, []);
 
   const loadUserAvatar = async () => {
     if (!profile?.id) return;
@@ -35,6 +44,35 @@ export function Layout({ children }: LayoutProps) {
       }
     } catch (err) {
       console.error('Error loading avatar:', err);
+    }
+  };
+
+  // Função para renderizar avatar circular com silhueta
+  const renderAvatar = (color: string, size: 'sm' | 'md' = 'md') => {
+    const sizeClasses = size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
+    return (
+      <div className={`${sizeClasses} ${color} rounded-full flex items-center justify-center relative overflow-hidden shadow-md smooth-transition group-hover:scale-110`}>
+        <div className="absolute inset-0 flex items-end justify-center">
+          <div className="relative" style={{ width: '70%', height: '70%' }}>
+            <div className="absolute top-[15%] left-1/2 transform -translate-x-1/2 w-[35%] h-[35%] bg-white/90 rounded-full"></div>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[70%] h-[55%] bg-white/90 rounded-t-full"></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Função para obter cor da borda baseada no role
+  const getRoleBorderColor = (role: string | null) => {
+    switch (role) {
+      case 'Gerente':
+        return 'border-red-500';
+      case 'Coordenador':
+        return 'border-purple-500';
+      case 'Analista':
+        return 'border-blue-500';
+      default:
+        return 'border-gray-300';
     }
   };
 
@@ -100,19 +138,19 @@ export function Layout({ children }: LayoutProps) {
               to="/perfil"
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `
-                w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition
+                group w-full flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition border-2
+                ${getRoleBorderColor(profile?.role || null)}
                 ${isActive
                   ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-50 hover-lift'
+                  : 'text-gray-700 hover:bg-gray-50 hover-lift bg-white'
                 }
               `}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-lg smooth-transition group-hover:scale-110">
-                {userAvatar}
-              </div>
+              {renderAvatar(userAvatar, 'sm')}
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Meu Perfil</div>
-                <div className="text-xs text-gray-500">{profile?.email}</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase">Meu Perfil</div>
+                <div className="text-sm font-medium text-gray-900">{profile?.role || 'Usuário'}</div>
+                <div className="text-xs text-gray-500 truncate">{profile?.email}</div>
               </div>
             </NavLink>
             <button
@@ -154,21 +192,10 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center space-x-4">
               <NavLink
                 to="/perfil"
-                className="hidden sm:flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-50 smooth-transition hover-lift group"
+                className="hidden sm:flex items-center justify-center smooth-transition hover-lift group"
+                title="Meu Perfil"
               >
-                {profile?.role && (
-                  <span className={`
-                    px-3 py-1 rounded-full text-xs font-medium smooth-transition
-                    ${profile.role === 'Gerente' ? 'bg-red-100 text-red-800 group-hover:bg-red-200' : ''}
-                    ${profile.role === 'Coordenador' ? 'bg-purple-100 text-purple-800 group-hover:bg-purple-200' : ''}
-                    ${profile.role === 'Analista' ? 'bg-blue-100 text-blue-800 group-hover:bg-blue-200' : ''}
-                  `}>
-                    {profile.role}
-                  </span>
-                )}
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-xl smooth-transition group-hover:scale-110 shadow-sm">
-                  {userAvatar}
-                </div>
+                {renderAvatar(userAvatar, 'md')}
               </NavLink>
             </div>
           </header>

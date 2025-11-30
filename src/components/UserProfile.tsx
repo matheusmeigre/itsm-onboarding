@@ -12,6 +12,21 @@ interface ProfileData {
   avatar: string;
 }
 
+// Função para renderizar avatar circular com silhueta
+const renderAvatar = (color: string, size: 'sm' | 'md' | 'lg' = 'md') => {
+  const sizeClasses = size === 'lg' ? 'w-20 h-20' : size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
+  return (
+    <div className={`${sizeClasses} ${color} rounded-full flex items-center justify-center relative overflow-hidden shadow-lg smooth-transition group-hover:scale-110`}>
+      <div className="absolute inset-0 flex items-end justify-center">
+        <div className="relative" style={{ width: '70%', height: '70%' }}>
+          <div className="absolute top-[15%] left-1/2 transform -translate-x-1/2 w-[35%] h-[35%] bg-white/90 rounded-full"></div>
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[70%] h-[55%] bg-white/90 rounded-t-full"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function UserProfile() {
   const { profile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -53,7 +68,7 @@ export function UserProfile() {
           last_name: profileData.last_name || '',
           age: profileData.age || '',
           bio: profileData.bio || '',
-          avatar: profileData.avatar || '👤',
+          avatar: profileData.avatar || 'bg-gray-400',
         });
       }
     } catch (err) {
@@ -77,7 +92,7 @@ export function UserProfile() {
         last_name: profileData.last_name || null,
         age: profileData.age || null,
         bio: profileData.bio || null,
-        avatar: profileData.avatar || '👤',
+        avatar: profileData.avatar || 'bg-gray-400',
         updated_at: new Date().toISOString(),
       };
 
@@ -90,6 +105,9 @@ export function UserProfile() {
 
       setSuccess('Perfil atualizado com sucesso!');
       setIsEditing(false);
+      
+      // Força reload do avatar no Layout
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -125,11 +143,11 @@ export function UserProfile() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white animate-slideInTop">
+      <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl p-8 text-white animate-slideInTop">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-4xl smooth-transition hover:scale-110">
-              {profileData.avatar || '👤'}
+            <div className="smooth-transition hover:scale-110">
+              {renderAvatar(profileData.avatar || 'bg-gray-400', 'lg')}
             </div>
             <div>
               <h1 className="text-3xl font-bold">
