@@ -4,12 +4,12 @@
 
 ### 1. Autenticação como Administrador
 
-Na página principal (Dashboard), você encontrará um botão **"Administrador"** no canto superior direito, com ícone de escudo.
+Na **página de login** (antes de fazer login normal), você encontrará um botão **"Entrar como Administrador"** abaixo do formulário de login.
 
-- Clique no botão **Administrador**
+- Na tela de login, clique no botão **"Entrar como Administrador"** (roxo/azul com ícone de escudo)
 - Digite suas credenciais de gerente no modal de autenticação
 - Apenas usuários com cargo de **Gerente** podem acessar esta funcionalidade
-- Após autenticação bem-sucedida, você será redirecionado para a página de gerenciamento
+- Após autenticação bem-sucedida, você será redirecionado diretamente para a página de gerenciamento de usuários
 
 ## Funcionalidades Disponíveis
 

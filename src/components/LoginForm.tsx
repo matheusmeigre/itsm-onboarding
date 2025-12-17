@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { LogIn } from 'lucide-react';
+import { LogIn, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { AdminAuthModal } from './AdminAuthModal';
+import { useNavigate } from 'react-router-dom';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +25,10 @@ export function LoginForm() {
     }
 
     setLoading(false);
+  };
+
+  const handleAdminAuthSuccess = () => {
+    navigate('/gerenciar-usuarios');
   };
 
   return (
@@ -85,9 +93,25 @@ export function LoginForm() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <button
+            onClick={() => setShowAdminAuth(true)}
+            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+          >
+            <Shield className="w-5 h-5" />
+            <span className="font-medium">Entrar como Administrador</span>
+          </button>
+        </div>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
           Não tem acesso? Entre em contato com o administrador do sistema.
         </p>
+
+        <AdminAuthModal
+          isOpen={showAdminAuth}
+          onClose={() => setShowAdminAuth(false)}
+          onSuccess={handleAdminAuthSuccess}
+        />
       </div>
     </div>
   );
