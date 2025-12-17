@@ -147,18 +147,35 @@ export function UserManagement() {
           email: user.email,
           password: user.password,
           email_confirm: true,
+          user_metadata: {
+            role: user.role
+          }
         });
 
         if (createError) throw createError;
 
         if (userData.user) {
+          // Aguardar um pouco para o trigger de profile ser executado
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          // Criar role do usuário
           const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
             user_id: userData.user.id,
             role: user.role,
             assigned_by: profile!.id,
           } as any);
 
-          if (roleError) throw roleError;
+          if (roleError) {
+            // Tentar criar o profile manualmente se não existir
+            await supabaseAdmin.from('profiles').upsert({
+              id: userData.user.id,
+              email: userData.user.email,
+              role: user.role,
+              avatar: 'bg-gray-400'
+            } as any, { onConflict: 'id' });
+            
+            throw roleError;
+          }
         }
 
         successCount++;
@@ -192,6 +209,9 @@ export function UserManagement() {
         email: newUserEmail,
         password: newUserPassword,
         email_confirm: true,
+        user_metadata: {
+          role: newUserRole
+        }
       });
 
       if (createError) {
@@ -202,13 +222,28 @@ export function UserManagement() {
       }
 
       if (userData.user) {
+        // Aguardar um pouco para o trigger de profile ser executado
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Criar role do usuário
         const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
           user_id: userData.user.id,
           role: newUserRole,
           assigned_by: profile!.id,
         } as any);
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Error creating role:', roleError);
+          // Tentar criar o profile manualmente se não existir
+          await supabaseAdmin.from('profiles').upsert({
+            id: userData.user.id,
+            email: userData.user.email,
+            role: newUserRole,
+            avatar: 'bg-gray-400'
+          } as any, { onConflict: 'id' });
+          
+          throw roleError;
+        }
       }
 
       setNewUserEmail('');
