@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FileText, CheckCircle, Clock, Users } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Users, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchDashboardStats } from '../services/documentService';
 import { Skeleton } from './ui/Skeleton';
+import { AdminAuthModal } from './AdminAuthModal';
+import { useNavigate } from 'react-router-dom';
 
 interface Stats {
   totalDocuments: number;
@@ -13,6 +15,7 @@ interface Stats {
 
 export function Dashboard() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
     totalDocuments: 0,
     approvedDocuments: 0,
@@ -21,6 +24,7 @@ export function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
 
   const loadStats = useCallback(async () => {
     try {
@@ -46,6 +50,10 @@ export function Dashboard() {
       setLoading(false);
     }
   }, [profile?.id]);
+
+  const handleAdminAuthSuccess = () => {
+    navigate('/gerenciar-usuarios');
+  };
 
   useEffect(() => {
     loadStats();
@@ -126,12 +134,23 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Bem-vindo ao Portal de Documentação
-        </h2>
-        <p className="text-gray-600">
-          Sistema de gerenciamento de documentação e onboarding da equipe de TI
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Bem-vindo ao Portal de Documentação
+            </h2>
+            <p className="text-gray-600">
+              Sistema de gerenciamento de documentação e onboarding da equipe de TI
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAdminAuth(true)}
+            className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+          >
+            <Shield className="w-5 h-5" />
+            <span className="font-medium">Administrador</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -193,6 +212,12 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+      
+      <AdminAuthModal
+        isOpen={showAdminAuth}
+        onClose={() => setShowAdminAuth(false)}
+        onSuccess={handleAdminAuthSuccess}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { DocumentList } from './components/DocumentList';
 import { DocumentEditor } from './components/DocumentEditor';
 import { DocumentViewer } from './components/DocumentViewer';
 import { AdminPanel } from './components/AdminPanel';
+import { UserManagement } from './components/UserManagement';
 import { UserProfile } from './components/UserProfile';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NotFound } from './components/NotFound';
@@ -207,6 +208,17 @@ function AppContent() {
           <ProtectedRoute requiredRoles={["Gerente", "Coordenador"]}>
             <Layout>
               <AdminPanel />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/gerenciar-usuarios"
+        element={
+          <ProtectedRoute requiredRoles={["Gerente"]}>
+            <Layout>
+              <UserManagement />
             </Layout>
           </ProtectedRoute>
         }
